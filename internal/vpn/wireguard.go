@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
-	"strings"
 	"time"
 
 	"github.com/qdm12/gluetun/internal/configuration/settings"
@@ -13,7 +12,6 @@ import (
 	"github.com/qdm12/gluetun/internal/provider"
 	"github.com/qdm12/gluetun/internal/wireguard"
 	"github.com/qdm12/gosettings"
-	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 )
 
 // setupWireguard sets Wireguard up using the configurators and settings given.
@@ -28,7 +26,7 @@ func setupWireguard(ctx context.Context, netlinker NetLinker,
 	ipv6Internet := ipv6SupportLevel == netlink.IPv6Internet
 	dynamicProvider, dynamic := providerConf.(provider.DynamicWireguardProvider)
 	if dynamic {
-		connection, err = dynamicProvider.GetWireguardConnection(ctx,
+		connection, err = dynamicProvider.GetAPIWireguardConnection(ctx,
 			settings.Provider.ServerSelection, restrictedClient)
 	} else {
 		connection, err = providerConf.GetConnection(settings.Provider.ServerSelection, ipv6Internet)
@@ -39,26 +37,10 @@ func setupWireguard(ctx context.Context, netlinker NetLinker,
 
 	var wireguardSettings wireguard.Settings
 	if dynamic {
-		wireguardConnection, err := dynamicProvider.RegisterWireguard(ctx, connection,
-			*settings.OpenVPN.User, *settings.OpenVPN.Password, restrictedClient)
+		wireguardSettings, connection, gateway, err = registeredWireguardSettings(ctx,
+			dynamicProvider, connection, settings, restrictedClient)
 		if err != nil {
-			return nil, models.Connection{}, netip.Addr{}, fmt.Errorf("registering Wireguard connection: %w", err)
-		}
-		connection = wireguardConnection.Connection
-		wireguardSettings = buildRegisteredWireguardSettings(wireguardConnection,
-			settings.Wireguard)
-		gateway = wireguardConnection.Gateway
-		clientPrivateKey, err := wgtypes.ParseKey(wireguardSettings.PrivateKey)
-		if err != nil {
-			return nil, models.Connection{}, netip.Addr{}, fmt.Errorf("parsing registered private key: %w", err)
-		}
-		logger.Info(fmt.Sprintf("PIA addKey Wireguard configuration: endpoint %s, peer public key %s, "+
-			"client public key %s, interface addresses %s",
-			wireguardSettings.Endpoint, shortWireguardKey(wireguardSettings.PublicKey),
-			shortWireguardKey(clientPrivateKey.PublicKey().String()),
-			wireguardAddresses(wireguardSettings.Addresses)))
-		if len(wireguardConnection.DNSServers) > 0 {
-			logger.Debugf("Wireguard provider DNS servers: %v", wireguardConnection.DNSServers)
+			return nil, models.Connection{}, netip.Addr{}, err
 		}
 	} else {
 		wireguardSettings = buildWireguardSettings(connection,
@@ -82,6 +64,24 @@ func setupWireguard(ctx context.Context, netlinker NetLinker,
 	return wireguarder, connection, gateway, nil
 }
 
+func registeredWireguardSettings(ctx context.Context,
+	dynamicProvider provider.DynamicWireguardProvider,
+	connection models.Connection, settings settings.VPN,
+	restrictedClient provider.RestrictedClient,
+) (wireguardSettings wireguard.Settings, updatedConnection models.Connection,
+	gateway netip.Addr, err error,
+) {
+	wireguardConnection, err := dynamicProvider.RegisterWireguard(ctx, connection,
+		*settings.OpenVPN.User, *settings.OpenVPN.Password, restrictedClient)
+	if err != nil {
+		return wireguard.Settings{}, models.Connection{}, netip.Addr{},
+			fmt.Errorf("registering Wireguard connection: %w", err)
+	}
+	wireguardSettings = buildRegisteredWireguardSettings(wireguardConnection,
+		settings.Wireguard)
+	return wireguardSettings, wireguardConnection.Connection, wireguardConnection.Gateway, nil
+}
+
 func buildRegisteredWireguardSettings(registration models.WireguardConnection,
 	userSettings settings.Wireguard,
 ) wireguard.Settings {
@@ -94,22 +94,6 @@ func buildRegisteredWireguardSettings(registration models.WireguardConnection,
 	}
 	const piaIPv6Supported = false
 	return buildWireguardSettings(registration.Connection, userSettings, piaIPv6Supported)
-}
-
-func shortWireguardKey(key string) string {
-	const visibleCharacters = 8
-	if len(key) <= 2*visibleCharacters {
-		return key
-	}
-	return key[:visibleCharacters] + "..." + key[len(key)-visibleCharacters:]
-}
-
-func wireguardAddresses(addresses []netip.Prefix) string {
-	addressStrings := make([]string, len(addresses))
-	for i, address := range addresses {
-		addressStrings[i] = address.String()
-	}
-	return strings.Join(addressStrings, ", ")
 }
 
 func buildWireguardSettings(connection models.Connection,

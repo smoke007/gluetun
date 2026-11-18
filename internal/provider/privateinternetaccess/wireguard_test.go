@@ -212,7 +212,6 @@ func Test_mapAddKeyResponse(t *testing.T) {
 	assert.Equal(t, expectedConnection, registration.Connection)
 	assert.Equal(t, clientPrivateKey.String(), registration.PrivateKey)
 	assert.Equal(t, []netip.Prefix{netip.MustParsePrefix("10.13.161.2/32")}, registration.Addresses)
-	assert.Equal(t, response.DNSServers, registration.DNSServers)
 	assert.Equal(t, response.ServerVIP, registration.Gateway)
 
 	response.PeerPubKey = serverPublicKey

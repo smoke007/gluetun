@@ -16,9 +16,9 @@ import (
 	"github.com/qdm12/gluetun/internal/provider/utils"
 )
 
-// GetWireguardConnection obtains a live PIA Wireguard registration endpoint.
+// GetAPIWireguardConnection obtains a live PIA Wireguard registration endpoint.
 // The embedded PIA server list only contains OpenVPN servers.
-func (p *Provider) GetWireguardConnection(ctx context.Context, selection settings.ServerSelection,
+func (p *Provider) GetAPIWireguardConnection(ctx context.Context, selection settings.ServerSelection,
 	restrictedClient common.RestrictedClient,
 ) (connection models.Connection, err error) {
 	if restrictedClient == nil {

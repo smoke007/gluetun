@@ -21,7 +21,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func Test_Provider_GetWireguardConnection(t *testing.T) {
+func Test_Provider_GetAPIWireguardConnection(t *testing.T) {
 	t.Parallel()
 
 	client := &http.Client{
@@ -54,7 +54,7 @@ func Test_Provider_GetWireguardConnection(t *testing.T) {
 		Regions: []string{"ca_vancouver"},
 	}.WithDefaults(providers.PrivateInternetAccess)
 
-	connection, err := provider.GetWireguardConnection(t.Context(), selection, restrictedClient)
+	connection, err := provider.GetAPIWireguardConnection(t.Context(), selection, restrictedClient)
 	require.NoError(t, err)
 	assert.Equal(t, models.Connection{
 		Type:        vpn.Wireguard,
@@ -66,7 +66,7 @@ func Test_Provider_GetWireguardConnection(t *testing.T) {
 		PortForward: true,
 	}, connection)
 
-	connection, err = provider.GetWireguardConnection(t.Context(), selection, restrictedClient)
+	connection, err = provider.GetAPIWireguardConnection(t.Context(), selection, restrictedClient)
 	require.NoError(t, err)
 	assert.Equal(t, netip.MustParseAddr("198.51.100.4"), connection.IP)
 	assert.Equal(t, "vancouver440", connection.ServerName)

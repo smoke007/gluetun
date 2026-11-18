@@ -23,7 +23,7 @@ type RestrictedClient = common.RestrictedClient
 // and returns provider-generated connection settings. Discovery and
 // registration are done for every connection attempt.
 type DynamicWireguardProvider interface {
-	GetWireguardConnection(ctx context.Context, selection settings.ServerSelection,
+	GetAPIWireguardConnection(ctx context.Context, selection settings.ServerSelection,
 		restrictedClient common.RestrictedClient) (connection models.Connection, err error)
 	RegisterWireguard(ctx context.Context, connection models.Connection,
 		username, password string, restrictedClient common.RestrictedClient) (

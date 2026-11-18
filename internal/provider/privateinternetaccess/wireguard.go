@@ -40,8 +40,6 @@ func (p *Provider) RegisterWireguard(ctx context.Context, connection models.Conn
 	switch {
 	case restrictedClient == nil:
 		return wireguardConnection, errors.New("restricted network client is not set")
-	case connection.ServerName == "":
-		return wireguardConnection, errors.New("registration server name is not set")
 	case username == "":
 		return wireguardConnection, errors.New("username is not set")
 	case password == "":
@@ -195,7 +193,6 @@ func mapAddKeyResponse(connection models.Connection, privateKey string,
 		Connection: connection,
 		PrivateKey: privateKey,
 		Addresses:  []netip.Prefix{address},
-		DNSServers: append([]netip.Addr(nil), response.DNSServers...),
 		Gateway:    response.ServerVIP,
 	}, nil
 }

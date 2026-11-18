@@ -7,6 +7,5 @@ type WireguardConnection struct {
 	Connection Connection
 	PrivateKey string
 	Addresses  []netip.Prefix
-	DNSServers []netip.Addr
 	Gateway    netip.Addr
 }
