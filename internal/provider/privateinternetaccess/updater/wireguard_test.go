@@ -22,7 +22,7 @@ func Test_Updater_FetchWireguardServers(t *testing.T) {
 	client := &http.Client{
 		Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
 			assert.Equal(t, http.MethodGet, request.Method)
-			assert.Equal(t, "https://serverlist.piaservers.net/vpninfo/servers/v6", request.URL.String())
+			assert.Equal(t, "https://serverlist.piaservers.net/vpninfo/servers/v7", request.URL.String())
 			return &http.Response{
 				StatusCode: http.StatusOK,
 				Status:     "200 OK",

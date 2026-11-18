@@ -18,7 +18,7 @@ import (
 func (u *Updater) FetchWireguardServers(ctx context.Context, selection settings.ServerSelection) (
 	servers []models.Server, err error,
 ) {
-	data, err := fetchWireguardAPI(ctx, u.client)
+	data, err := fetchAPI(ctx, u.client)
 	if err != nil {
 		return nil, fmt.Errorf("fetching PIA server list: %w", err)
 	}

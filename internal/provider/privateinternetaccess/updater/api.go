@@ -35,20 +35,9 @@ type serverData struct {
 func fetchAPI(ctx context.Context, client *http.Client) (
 	data apiData, err error,
 ) {
+	// v7 serves every protocol, including the Wireguard and Amneziawg
+	// server entries, so a single call feeds all connection paths.
 	const url = "https://serverlist.piaservers.net/vpninfo/servers/v7"
-	return fetchAPIFromURL(ctx, client, url)
-}
-
-func fetchWireguardAPI(ctx context.Context, client *http.Client) (
-	data apiData, err error,
-) {
-	const url = "https://serverlist.piaservers.net/vpninfo/servers/v6"
-	return fetchAPIFromURL(ctx, client, url)
-}
-
-func fetchAPIFromURL(ctx context.Context, client *http.Client, url string) (
-	data apiData, err error,
-) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return data, err
