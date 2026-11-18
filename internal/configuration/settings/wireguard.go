@@ -63,7 +63,7 @@ func (w Wireguard) validate(vpnProvider string, ipv6Supported, amneziawg bool) (
 	dynamicPIAWireguard := vpnProvider == providers.PrivateInternetAccess && !amneziawg
 	if dynamicPIAWireguard {
 		if err := w.validatePIAStaticSettings(); err != nil {
-			return err
+			return fmt.Errorf("private internet access settings: %w", err)
 		}
 	}
 
@@ -138,11 +138,11 @@ func (w Wireguard) validate(vpnProvider string, ipv6Supported, amneziawg bool) (
 func (w Wireguard) validatePIAStaticSettings() error {
 	switch {
 	case *w.PrivateKey != "":
-		return errors.New("private key must not be set for Private Internet Access")
+		return errors.New("private key must not be set")
 	case *w.PreSharedKey != "":
-		return errors.New("pre-shared key must not be set for Private Internet Access")
+		return errors.New("pre-shared key must not be set")
 	case len(w.Addresses) > 0:
-		return errors.New("interface addresses must not be set for Private Internet Access")
+		return errors.New("interface addresses must not be set")
 	default:
 		return nil
 	}
@@ -157,15 +157,15 @@ func (w Wireguard) validatePrivateKey(vpnProvider string, optional bool) error {
 	}
 
 	_, err := wgtypes.ParseKey(*w.PrivateKey)
-	if err == nil {
-		return nil
+	if err != nil {
+		err = fmt.Errorf("private key is not valid: %w", err)
+		if vpnProvider == providers.Nordvpn &&
+			err.Error() == "wgtypes: incorrect key size: 48" {
+			err = fmt.Errorf("%w - you might be using your access token instead of the Wireguard private key", err)
+		}
+		return err
 	}
-	err = fmt.Errorf("private key is not valid: %w", err)
-	if vpnProvider == providers.Nordvpn &&
-		err.Error() == "wgtypes: incorrect key size: 48" {
-		err = fmt.Errorf("%w - you might be using your access token instead of the Wireguard private key", err)
-	}
-	return err
+	return nil
 }
 
 func (w *Wireguard) copy() (copied Wireguard) {

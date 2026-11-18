@@ -40,8 +40,8 @@ func (w WireguardSelection) validate(vpnProvider string) (err error) {
 	// Validate EndpointIP
 	switch vpnProvider {
 	case providers.Airvpn, providers.Fastestvpn, providers.Ivpn,
-		providers.Mullvad, providers.Nordvpn, providers.Protonvpn,
-		providers.PrivateInternetAccess, providers.Surfshark, providers.Windscribe:
+		providers.Mullvad, providers.Nordvpn, providers.PrivateInternetAccess,
+		providers.Protonvpn, providers.Surfshark, providers.Windscribe:
 		// endpoint IP addresses are baked in
 	case providers.Custom:
 		if !w.EndpointIP.IsValid() || w.EndpointIP.IsUnspecified() {
