@@ -54,8 +54,8 @@ type PortForwarding struct {
 	// Password is only used for Private Internet Access port forwarding.
 	Password string `json:"password"`
 	// ServerName is only used for Private Internet Access port forwarding
-	// TLS certificate verification. It overrides the server name obtained
-	// from the VPN connection when set.
+	// TLS certificate verification, as a fallback when the VPN connection
+	// does not carry a server name (custom provider with a user wg0.conf).
 	ServerName string `json:"server_name"`
 }
 
@@ -223,17 +223,14 @@ func (p *PortForwarding) read(r *reader.Reader) (err error) {
 	p.Provider = r.Get("VPN_PORT_FORWARDING_PROVIDER")
 
 	p.Filepath = r.Get("VPN_PORT_FORWARDING_STATUS_FILE",
-		reader.ForceLowercase(false),
 		reader.RetroKeys(
 			"PORT_FORWARDING_STATUS_FILE",
 			"PRIVATE_INTERNET_ACCESS_VPN_PORT_FORWARDING_STATUS_FILE",
 		))
 
-	p.UpCommand = r.Get("VPN_PORT_FORWARDING_UP_COMMAND",
-		reader.ForceLowercase(false))
+	p.UpCommand = r.Get("VPN_PORT_FORWARDING_UP_COMMAND")
 
-	p.DownCommand = r.Get("VPN_PORT_FORWARDING_DOWN_COMMAND",
-		reader.ForceLowercase(false))
+	p.DownCommand = r.Get("VPN_PORT_FORWARDING_DOWN_COMMAND")
 
 	p.ListeningPorts, err = r.CSVUint16("VPN_PORT_FORWARDING_LISTENING_PORTS",
 		reader.RetroKeys("VPN_PORT_FORWARDING_LISTENING_PORT"))
@@ -246,12 +243,11 @@ func (p *PortForwarding) read(r *reader.Reader) (err error) {
 		return err
 	}
 
-	p.ServerName = r.String("VPN_PORT_FORWARDING_SERVER_NAME",
-		reader.ForceLowercase(false))
+	p.ServerName = r.String("VPN_PORT_FORWARDING_SERVER_NAME")
 
 	usernameKeys := []string{"VPN_PORT_FORWARDING_USERNAME", "OPENVPN_USER", "USER"}
 	for _, key := range usernameKeys {
-		p.Username = r.String(key, reader.ForceLowercase(false))
+		p.Username = r.String(key)
 		if p.Username != "" {
 			break
 		}
@@ -259,7 +255,7 @@ func (p *PortForwarding) read(r *reader.Reader) (err error) {
 
 	passwordKeys := []string{"VPN_PORT_FORWARDING_PASSWORD", "OPENVPN_PASSWORD", "PASSWORD"}
 	for _, key := range passwordKeys {
-		p.Password = r.String(key, reader.ForceLowercase(false))
+		p.Password = r.String(key)
 		if p.Password != "" {
 			break
 		}

@@ -55,8 +55,11 @@ func (l *Loop) Run(ctx context.Context, done chan<- struct{}) {
 			l.crashed(ctx, err)
 			continue
 		}
+		// Custom-provider connections (e.g. a user wg0.conf with PIA port
+		// forwarding) carry no server name; the setting is the fallback for
+		// that case. Native PIA connections always carry one.
 		serverName := connection.ServerName
-		if settings.Provider.PortForwarding.ServerName != "" {
+		if serverName == "" {
 			serverName = settings.Provider.PortForwarding.ServerName
 		}
 		tunnelUpData := tunnelUpData{
