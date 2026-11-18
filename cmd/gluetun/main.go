@@ -450,34 +450,11 @@ func _main(ctx context.Context, buildInfo models.BuildInformation,
 	var restrictedClient provider.RestrictedClient
 	if allSettings.VPN.Type == cvpn.Wireguard &&
 		allSettings.VPN.Provider.Name == cproviders.PrivateInternetAccess {
-		defaultIPv4Interface := ""
-		for _, defaultRoute := range defaultRoutes {
-			if defaultRoute.Family == netlink.FamilyV4 {
-				defaultIPv4Interface = defaultRoute.NetInterface
-				break
-			}
+		restrictedClient, err = restrictednet.Setup(defaultRoutes,
+			allSettings.DNS.Providers, firewallConf, false)
+		if err != nil {
+			return fmt.Errorf("creating restricted network client: %w", err)
 		}
-		if defaultIPv4Interface == "" {
-			return fmt.Errorf("creating restricted network client: IPv4 default interface is not found")
-		}
-
-		availableDNSProviders := dnsprovider.NewProviders()
-		upstreamResolvers := make([]dnsprovider.Provider, len(allSettings.DNS.Providers))
-		for i, providerName := range allSettings.DNS.Providers {
-			upstreamResolver, err := availableDNSProviders.Get(providerName)
-			if err != nil {
-				return fmt.Errorf("creating restricted network client: DNS provider %q: %w",
-					providerName, err)
-			}
-			upstreamResolvers[i] = upstreamResolver
-		}
-		ipv6Supported := false
-		restrictedClient = restrictednet.New(restrictednet.Settings{
-			DefaultInterface:  defaultIPv4Interface,
-			IPv6Supported:     &ipv6Supported,
-			Firewall:          firewallConf,
-			UpstreamResolvers: upstreamResolvers,
-		})
 	}
 
 	boringPollLogger := logger.New(log.SetComponent("boring poll"))
