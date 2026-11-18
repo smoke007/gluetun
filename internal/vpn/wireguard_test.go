@@ -45,14 +45,23 @@ func Test_buildRegisteredWireguardSettings(t *testing.T) {
 
 	wireguardSettings := buildRegisteredWireguardSettings(registration, userSettings)
 
-	assert.Equal(t, registeredPrivateKey.String(), wireguardSettings.PrivateKey)
-	assert.Equal(t, registration.Connection.PubKey, wireguardSettings.PublicKey)
-	assert.Equal(t, netip.MustParseAddrPort("198.51.100.3:1337"), wireguardSettings.Endpoint)
-	assert.Equal(t, registration.Addresses, wireguardSettings.Addresses)
-	assert.Equal(t, []netip.Prefix{netip.MustParsePrefix("0.0.0.0/0")}, wireguardSettings.AllowedIPs)
-	assert.False(t, *wireguardSettings.IPv6)
-	assert.Equal(t, 25*time.Second, wireguardSettings.PersistentKeepaliveInterval)
-	assert.Equal(t, new(true), wireguardSettings.GSO)
+	// Whole-struct assert to also catch new future fields not being set.
+	assert.Equal(t, wireguard.Settings{
+		PrivateKey:                  registeredPrivateKey.String(),
+		PublicKey:                   serverPrivateKey.PublicKey().String(),
+		PreSharedKey:                "",
+		Endpoint:                    netip.MustParseAddrPort("198.51.100.3:1337"),
+		Addresses:                   []netip.Prefix{netip.MustParsePrefix("10.13.161.2/32")},
+		AllowedIPs:                  []netip.Prefix{netip.MustParsePrefix("0.0.0.0/0")},
+		PersistentKeepaliveInterval: 25 * time.Second,
+		FirewallMark:                0,
+		MTU:                         1320,
+		RulePriority:                101,
+		IPv6:                        new(false),
+		Implementation:              "",
+		GSO:                         new(true),
+		InterfaceName:               "tun0",
+	}, wireguardSettings)
 }
 
 func Test_buildWireguardSettings(t *testing.T) {
