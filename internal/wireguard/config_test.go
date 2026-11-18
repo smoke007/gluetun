@@ -62,7 +62,6 @@ func Test_makeDeviceConfig(t *testing.T) {
 				PreSharedKey: validKey3,
 				FirewallMark: 9876,
 				Endpoint:     netip.AddrPortFrom(netip.AddrFrom4([4]byte{99, 99, 99, 99}), 51820),
-				AllowedIPs:   []netip.Prefix{netip.MustParsePrefix("0.0.0.0/0")},
 			},
 			config: wgtypes.Config{
 				PrivateKey:   parseKey(t, validKey1),
@@ -74,8 +73,12 @@ func Test_makeDeviceConfig(t *testing.T) {
 						PresharedKey: parseKey(t, validKey3),
 						AllowedIPs: []net.IPNet{
 							{
-								IP:   net.IP{0, 0, 0, 0},
+								IP:   net.IPv4(0, 0, 0, 0),
 								Mask: []byte{0, 0, 0, 0},
+							},
+							{
+								IP:   net.IPv6zero,
+								Mask: []byte(net.IPv6zero),
 							},
 						},
 						ReplaceAllowedIPs: true,
